@@ -1,0 +1,48 @@
+procedure start(argc, argv) do
+  declare myBinReader;
+  declare mySimulation;
+  declare myReporter
+  get processNumber;
+  get processCount;
+  // iterate through the plates in the jobfile
+  if (processNumber equals 0) do
+    // process number that is ready to work
+    declare readyProcess as an integer
+    declare array of results
+    while (plateFile available) do
+      receive(readyProcess, 1, any_process)
+      receive(result, size(result), readyProcess)
+      if (result != " ") do
+        pushBack result to results
+        pushFront current_index to platePath
+      end
+      send(platePath, platePath_size, readyProcess)
+    end
+    while (length(results) != length(plates)) do
+      receive(readyProcess, 1, any_process)
+      receive(result, size(result), readyProcess)
+      pushBack result to results
+    end
+    // stop condition is a -1 index like "-1plate"
+    send(-1, 1, all processes)
+    sort(results)
+    myReporter report results
+  end
+  else do
+    declare currentPlatePath
+    declare currentIndex
+    declare currentResult
+    while (currentIndex not equal -1) do
+      send(processNumber, 1, 0)
+      send(currentResult, size(currentResult), 0)
+      receive(currentPlatePath, 1, 0)
+      extract currentIndex from currentPlatePath
+      if (current_index != -1) do
+        myBinReader reads file and creates matrix
+        mySimulation simulatesMatrix
+        create string result
+        myReporter report matrix
+      end
+    end
+  end
+end procedure
